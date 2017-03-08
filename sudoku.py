@@ -5,6 +5,7 @@
 import numpy as np
 import math
 import queue
+import copy
 
 class Solver():
     
@@ -29,57 +30,83 @@ class Solver():
                 # otherwise, just give it the integer value
                 else:
                     self.puzzle[row, col] = Square(int(val), row, col)
-                    # and add it to the propagation queue so its value can be propagated to its neighbors
+                    # add it to the propagation queue so its value can be propagated to its neighbors
                     self.propq.put(self.puzzle[row,col])
 
 
-    def solve(self):
-        """ Solves the loaded puzzle and returns the result as a string. """
+    def solve(self, puzzle = None):
+        """ Recursively solves the designated puzzle and returns the result as a string. """
 
+        # if no puzzle was provided, just fill it in with the originally loaded one
+        if not puzzle:
+            puzzle = self.puzzle
+        
         # while there are indices in the propagation queue, propagate those
         while not self.propq.empty():
             # pop the square at the end of the queue
             sq = self.propq.get()
-            # propagate that value to its row
-            self.propagate(sq.val, self.puzzle[:, sq.col])
-            # and its column
-            self.propagate(sq.val, self.puzzle[sq.row, :])
+            # propagate that value to its row, if it runs into a conflict, return false to say that this path did not work
+            if not self.propagate(sq, puzzle[:, sq.col]):
+                return False
+            # same for its column
+            if not self.propagate(sq, puzzle[sq.row, :]):
+                return False
             # find which column of boxes it's in
             col = math.floor(sq.col/3)
             # and which row
             row = math.floor(sq.row/3)
             # grab that box
-            box = self.puzzle[row*3:row*3+3, col*3:col*3+3]
+            box = puzzle[row*3:row*3+3, col*3:col*3+3]
             # flatten it and propagate the value to it too
-            self.propagate(sq.val, box.flatten())
-            
-        # TODO - implement search for when the puzzle isn't completely solved by constraint propagation
+            if not self.propagate(sq, box.flatten()):
+                return False
 
+        # if no value has been returned yet, that means we have to find an unfilled square to asign a value to and recurse on that new puzzle
+        for row in range(9):
+            for col in range(9):
+                # grab the square at that row and column
+                sq = puzzle[row, col]
+                # if the value of the square at that row and column is a list, recurse on it
+                if isinstance(sq.val, list):
+                    # loop through all of its possible values, if one of them is successful, return that
+                    for val in sq.val:
+                        # create a copy of the puzzle with that square's value equal to val
+                        newpuz = copy.deepcopy(puzzle)
+                        newpuz[row, col].val = val
+                        # recurse on the new puzzle and store the result
+                        result = self.solve(newpuz)
+                        # if it was successful, return the result
+                        if result:
+                            return result
+                    # if none of the values were successful, subtract one from the number of solved squares and return false
+                    return False
+
+        # if no value has been returned yet, that means there were no unfilled squares, so the puzzle has been solved! Now we can return it as a string
         # string representation of the solved puzzle
         puzzlestr = ""
         # loop through each row and column in the puzzle
-        for row in self.puzzle:
+        for row in puzzle:
             for col in row:
                 # add the string represetnation of that square
                 puzzlestr += str(col)
         # return the string
-        return puzzlestr
+        return puzzlestr        
 
 
-    def propagate(self, value, neighbors):
+    def propagate(self, propsq, neighbors):
         """ Propagates the designated value to all elements in the provided list of neighbors. """
 
         # loop through all the neighboring squares in the list provided and, if they don't have values of their own yet, propagate the constraint to them
         for sq in neighbors:
             # if the square's value is a list of possible values, and it contains value, remove value from it
-            if isinstance(sq.val, list) and value in sq.val:
-                sq.val.remove(value)
+            if isinstance(sq.val, list) and propsq.val in sq.val:
+                sq.val.remove(propsq.val)
                 # if the list now only contains one value, give it that value and propagate it
                 if len(sq.val) == 1:
                     sq.val = sq.val[0]
                     self.propq.put(sq)
             # if the square's value is an integer that is equal to value, return false
-            if sq.val == value:
+            if sq.val == propsq.val and not sq == propsq:
                 return False
 
 
