@@ -38,9 +38,8 @@ class Solver():
         """ Recursively solves the designated puzzle and returns the result as a string. """
 
         # if no puzzle was provided, just fill it in with the originally loaded one
-        if not puzzle:
+        if puzzle is None:
             puzzle = self.puzzle
-        
         # while there are indices in the propagation queue, propagate those
         while not self.propq.empty():
             # pop the square at the end of the queue
@@ -73,12 +72,16 @@ class Solver():
                         # create a copy of the puzzle with that square's value equal to val
                         newpuz = copy.deepcopy(puzzle)
                         newpuz[row, col].val = val
+                        # create a new propagation queue
+                        self.propq = queue.Queue()
+                        # and add that square to it
+                        self.propq.put(newpuz[row, col])
                         # recurse on the new puzzle and store the result
-                        result = self.solve(newpuz)
+                        result = self.solve(puzzle = newpuz)
                         # if it was successful, return the result
                         if result:
                             return result
-                    # if none of the values were successful, subtract one from the number of solved squares and return false
+                    # if none of the values were successful return false
                     return False
 
         # if no value has been returned yet, that means there were no unfilled squares, so the puzzle has been solved! Now we can return it as a string
@@ -98,16 +101,21 @@ class Solver():
 
         # loop through all the neighboring squares in the list provided and, if they don't have values of their own yet, propagate the constraint to them
         for sq in neighbors:
-            # if the square's value is a list of possible values, and it contains value, remove value from it
+            # if the square's value is a list of possible values, and it contains the propagated value, remove that from it
             if isinstance(sq.val, list) and propsq.val in sq.val:
                 sq.val.remove(propsq.val)
                 # if the list now only contains one value, give it that value and propagate it
                 if len(sq.val) == 1:
                     sq.val = sq.val[0]
                     self.propq.put(sq)
-            # if the square's value is an integer that is equal to value, return false
-            if sq.val == propsq.val and not sq == propsq:
+                # if the list is empty, return false
+                elif len(sq.val) == 0:
+                    return False
+            # if the square's value is an integer that is equal to the propagated square's value, return false
+            if sq.val == propsq.val and not sq is propsq:
                 return False
+        # if that all succeeds, return true
+        return True
 
 
 
