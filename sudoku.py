@@ -137,13 +137,10 @@ class Square():
 def main(fname):
     # open the designated file
     file = open(fname, "r")
+    # create a file to write the solutions to
+    solutions = open("solutions" + fname, "w")
     # solve each puzzle in the file
     for line in file:
         solver = Solver(line.strip('\n'))
-        # solve the puzzle and print the results
-        print(solver.solve())
-        # lets just solve the first puzzle for now
-        break
-
-main("euler.txt")
-    
+        # solve the puzzle and write the results to the solution file
+        solutions.write(solver.solve() + '\n')
