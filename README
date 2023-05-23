@@ -1,10 +1,5 @@
 (The solutions from each data set are stored in their own files - "solutionseuler.txt" and "solutionsmagictour.txt".)
 
-
-I enjoyed implementing the constraint propagation and depth first search algorithms. They were fairly straighforward and fun to write up. However, as it often is, debugging was frustrating. It didn't return any errors, just the wrong output. Eventually I figured out that I was interrupting constraint propagation after propagating a square's value to only its first neighbor. I fixed the bug and was able to get it to solve sudokus successfuly, which was very rewarding to have accomplished.
-
-
+Reflection: Implementing the constraint propagation and depth first search algorithms was fairly straighforward and fun to write up.
+Debugging: Initially, it didn't return any errors, just the wrong output. Eventually, I figured out that I was interrupting constraint propagation after propagating a square's value to only its first neighbor. I fixed the bug and was able to get it to solve sudokus successfuly.
 I spent about four hours on this assignment.
-
-
-I affirm that I have adhered to the Honor Code on this assignment.
